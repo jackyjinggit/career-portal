@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>玄览 · xuanlan-governance-kit | 跨运行时治理层</title>
+<meta name="description" content="玄览（xuanlan）——跨运行时的治理/规划 agent + 架构合规检测器。架在任意 Agent Harness 之上：方向谁决、偏航谁拦、谄媚谁防。已在 opencode / WorkBuddy 双运行时验证可跑、结果一致、可磁盘佐证。">
+<meta property="og:title" content="玄览 · xuanlan-governance-kit | 跨运行时治理层">
+<meta property="og:description" content="架在任意 Agent Harness 之上的治理层：方向谁决、偏航谁拦、谄媚谁防。双运行时验证一致、可佐证。">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="zh_CN">
+<meta name="twitter:card" content="summary">
+<style>
+  :root{
+    --bg0:#0a0a23; --bg1:#0d0d2e; --bg2:#12122e;
+    --line:rgba(255,255,255,0.12); --line2:rgba(255,255,255,0.20);
+    --ink:#e6e8ef; --ink-dim:#a8b0c4; --ink-faint:#7c8298;
+    --cyan:#4d6bfe; --cyan-bright:#6d8cff; --blue:#4d6bfe;
+    --gold:#e8c37a; --red:#e0645c; --green:#7ad0a0;
+    --card:rgba(14,22,40,.82); --glow:0 0 24px rgba(77,107,254,.18);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(42,58,140,.28), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(30,52,120,.22), transparent 55%),
+      linear-gradient(160deg,var(--bg0),var(--bg1) 55%,var(--bg2));
+    color:var(--ink);
+    font-family:Inter,"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,sans-serif;
+    min-height:100vh; overflow-x:hidden;
+  }
+  .bg-grid{
+    position:fixed; inset:0; pointer-events:none; opacity:.5;
+    background-image:
+      linear-gradient(rgba(77,107,254,.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(77,107,254,.045) 1px, transparent 1px);
+    background-size:44px 44px;
+    mask-image:radial-gradient(80% 70% at 50% 20%, #000 30%, transparent 100%);
+    -webkit-mask-image:radial-gradient(80% 70% at 50% 20%, #000 30%, transparent 100%);
+  }
+  .wrap{max-width:1040px;margin:0 auto;padding:28px 20px 60px;position:relative}
+
+  header{display:flex;align-items:baseline;gap:14px;padding:6px 2px 18px}
+  header .logo{
+    width:30px;height:30px;border-radius:8px;flex:none;
+    background:linear-gradient(135deg,var(--cyan),var(--blue));
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px;font-weight:800;color:#ffffff;box-shadow:var(--glow);
+  }
+  header h1{font-size:19px;font-weight:700;letter-spacing:.5px}
+  header h1 .dim{color:var(--ink-faint);font-weight:400;font-size:14px;margin-left:8px}
+  header .badge{margin-left:auto;font-size:12px;color:var(--cyan);border:1px solid rgba(77,107,254,.35);border-radius:20px;padding:3px 12px;background:rgba(77,107,254,.08)}
+
+  /* hero */
+  .hero{
+    position:relative;border:1px solid var(--line);border-radius:20px;overflow:hidden;
+    padding:44px 40px 40px;background:
+      radial-gradient(600px 300px at 85% 0%, rgba(77,107,254,.14), transparent 60%),
+      var(--card);
+    margin-bottom:26px;
+  }
+  .hero .kicker{font-size:12px;letter-spacing:3px;color:var(--cyan);margin-bottom:14px}
+  .hero h2{font-size:34px;line-height:1.35;font-weight:750;letter-spacing:1px}
+  .hero h2 .hl{color:var(--cyan-bright)}
+  .hero p{font-size:15px;line-height:1.6;color:var(--ink-dim);margin-top:16px;max-width:640px}
+  .hero .q{
+    margin-top:24px;padding:14px 18px;border-left:3px solid var(--cyan);border-radius:0 10px 10px 0;
+    background:rgba(77,107,254,.07);font-size:14px;line-height:1.6;color:var(--ink);
+  }
+  .hero .q b{color:var(--gold)}
+
+  .sec-title{display:flex;align-items:center;gap:10px;margin:34px 2px 14px;font-size:15px;font-weight:700;letter-spacing:1px}
+  .sec-title .bar{width:4px;height:16px;border-radius:2px;background:linear-gradient(180deg,var(--cyan),var(--blue))}
+  .sec-title .note{font-size:11px;color:var(--ink-faint);font-weight:400;letter-spacing:0}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;
+    transition:transform .2s,border-color .2s;
+  }
+  .card:hover{transform:translateY(-3px);border-color:var(--line2)}
+  .card[data-link]{cursor:pointer}
+  .card[data-link]:hover{border-color:var(--cyan-bright)}
+  .card[data-link]::after{content:"↗";position:absolute;top:12px;right:14px;font-size:12px;color:var(--cyan-bright);opacity:.7}
+  .card h3{font-size:14.5px;margin:8px 0 6px;font-weight:650}
+  .card p{font-size:12.5px;line-height:1.6;color:var(--ink-dim)}
+  .card .ico{font-size:18px}
+
+  /* 三问 */
+  .tri{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:720px){.tri{grid-template-columns:1fr}}
+  .tri .cell{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;
+    text-align:center;
+  }
+  .tri .cell .big{font-size:30px;font-weight:800;color:var(--cyan-bright);margin-bottom:8px}
+  .tri .cell .t{font-size:14px;font-weight:650;margin-bottom:6px}
+  .tri .cell .d{font-size:12px;color:var(--ink-dim);line-height:1.7}
+
+  /* 双线验证表 */
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;font-size:12.5px}
+  th,td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--line)}
+  th{background:rgba(26,36,80,.5);color:var(--cyan-bright);font-weight:650;font-size:12px;letter-spacing:1px}
+  td{color:var(--ink-dim);line-height:1.6}
+  td b{color:var(--ink)}
+  .ok{color:var(--green);font-weight:700}
+
+  /* 接入示意 */
+  .stack{
+    display:flex;flex-direction:column;gap:8px;max-width:560px;margin:0 auto;
+  }
+  .stack .layer{
+    border:1px solid var(--line2);border-radius:12px;padding:12px 16px;text-align:center;font-size:13px;color:var(--ink-dim);background:rgba(16,20,46,.6);
+  }
+  .stack .layer.hl{
+    border-color:var(--cyan);background:rgba(77,107,254,.09);color:var(--cyan-bright);font-weight:650;
+  }
+  .stack .arrow{text-align:center;color:var(--ink-faint);font-size:12px}
+
+  .foot{display:flex;flex-wrap:wrap;gap:18px;justify-content:space-between;align-items:center;margin-top:26px;padding:16px 4px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-dim)}
+  .foot .right{color:var(--ink-faint);font-size:11px}
+
+  /* 顶部统一导航 */
+  .topnav{display:flex;flex-wrap:wrap;gap:6px;padding:10px 0 16px;margin-bottom:18px;border-bottom:1px solid var(--line);font-size:12.5px}
+  .topnav .navlink{padding:5px 12px;border-radius:18px;border:1px solid transparent;color:var(--ink-dim);text-decoration:none;transition:all .18s}
+  .topnav .navlink:hover{color:var(--cyan-bright);border-color:var(--line2)}
+  .topnav .navlink.active{color:#fff;background:linear-gradient(135deg,var(--cyan),var(--cyan-bright));border-color:transparent}
+  /* IAAP 直验高亮按钮（hero 旁） */
+  .iaap-pill{display:inline-block;padding:5px 12px;border-radius:18px;background:rgba(122,208,160,.12);color:var(--green);border:1px solid rgba(122,208,160,.30);font-size:12px;text-decoration:none;margin-left:8px}
+  .iaap-pill:hover{background:rgba(122,208,160,.20)}
+
+
+  /* 简历下拉 */
+  .nav-dropdown{position:relative;display:inline-block}
+  .nav-dropdown-toggle{
+    background:transparent;border:1px solid transparent;color:var(--ink-dim);
+    font-family:inherit;font-size:12.5px;cursor:pointer;padding:5px 12px;border-radius:18px;
+    display:inline-flex;align-items:center;gap:3px;
+  }
+  .nav-dropdown-toggle:hover{color:var(--cyan-bright);border-color:var(--line2)}
+  .nav-dropdown-toggle.active{color:#fff;background:linear-gradient(135deg,var(--cyan),var(--cyan-bright));border-color:transparent}
+  .nav-dropdown-toggle .caret{font-size:9px;opacity:.7;margin-left:2px}
+  .nav-dropdown-menu{
+    display:none;position:absolute;top:calc(100% + 8px);left:0;
+    background:rgba(14,22,40,.95);border:1px solid var(--line2);border-radius:14px;
+    padding:8px;min-width:220px;z-index:100;box-shadow:0 8px 32px rgba(0,0,0,.5);
+    backdrop-filter:blur(8px);
+  }
+  .nav-dropdown:hover .nav-dropdown-menu,.nav-dropdown:focus-within .nav-dropdown-menu{display:block}
+  .nav-dropdown-menu .dropdown-item{
+    display:block;padding:9px 14px;color:var(--ink-dim);text-decoration:none;
+    border-radius:10px;font-size:12.5px;line-height:1.5;white-space:nowrap;
+    transition:all .15s;
+  }
+  .nav-dropdown-menu .dropdown-item:hover{color:var(--cyan-bright);background:rgba(77,107,254,.10)}
+  .nav-dropdown-menu .dropdown-item b{display:block;font-size:12px;margin-bottom:2px}
+  .nav-dropdown-menu .dropdown-item span{font-size:10.5px;color:var(--ink-faint)}
+
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="wrap">
+<nav class="topnav"><a href="看板娘_砚_intro.html" class="navlink" title="蒋平的 AI 搭档·自我介绍看板娘">个人主页</a><div class="nav-dropdown"><button class="nav-dropdown-toggle" onclick="window.location.href='简历蒋平_HTML版_2026-08-29.html'">简历 <span class="caret">▾</span></button><div class="nav-dropdown-menu"><a href="简历蒋平_HTML版_2026-08-29.html" class="dropdown-item"><b>📄 个人主页（本地）</b><span>完整版</span></a><a href="https://jackyjinggit.github.io/pdss-life-value-system/dsh-for-founders.html" target="_blank" rel="noopener" class="dropdown-item"><b>📄 简历·founder 版 ↗</b><span>面向创业者/合伙人</span></a><a href="https://jackyjinggit.github.io/pdss-life-value-system/dsh-for-recruiters.html" target="_blank" rel="noopener" class="dropdown-item"><b>📄 简历·HR 版 ↗</b><span>面向招聘团队</span></a></div></div><a href="xuanlan_治理套件_intro.html" class="navlink active">玄览</a><a href="窗口对话IAAP直验Protocol_v1_2026-08-29.html" class="navlink">IAAP</a><a href="完成度实证报告_2026-08-29.html" class="navlink">实证</a></nav>
+
+  <header>
+    <div class="logo">玄</div>
+    <h1>玄览 <span class="dim">xuanlan-governance-kit · 跨运行时治理层</span></h1>
+    <div class="badge">双运行时验证 · 可佐证</div>
+  </header>
+
+  <!-- hero -->
+  <div class="hero">
+    <div class="kicker">GOVERNANCE LAYER · 治理层</div>
+    <h2>壳开源了，然后呢？<br><span class="hl">方向谁决、偏航谁拦、谄媚谁防</span></h2>
+    <p>2026 年，Agent Harness 的开源让「谁来动手」被标准化。但壳解决不了三件事——方向谁决、偏航谁拦、谄媚（模型一味顺着人说）谁防。这三件事不在壳的能力范围里，在壳和人的关系里。</p>
+    <div class="q">壳标准化之后，腾出来的不是真空，是让<b>治理层</b>好好长出来的空间。<br>能力够了，扶手呢？</div>
+  </div>
+
+  <!-- 是什么 -->
+  <div class="sec-title"><span class="bar"></span>玄览是什么</div>
+  <div class="grid">
+    <div class="card">
+      <div class="ico">🧭</div>
+      <h3>治理 / 规划 agent</h3>
+      <p>方向、边界、节奏的协调者。架在任意 harness 之上，不做另一套壳，做壳之上的那一半——治理层。</p>
+    </div>
+    <div class="card">
+      <div class="ico">🔍</div>
+      <h3>架构合规检测器</h3>
+      <p>偏离自检：死指针、旧路径残留、版本漂移三类漂移的只读巡检，严格不改文件，磁盘即权威源。</p>
+    </div>
+    <div class="card">
+      <div class="ico">🔌</div>
+      <h3>即插即用 drop-in</h3>
+      <p>已在 opencode、WorkBuddy 验证可跑；Claude Code 可直接 drop-in 接入。不改原 agent 执行逻辑，只在外层叠加治理。</p>
+    </div>
+  </div>
+
+  <!-- 三问 -->
+  <div class="sec-title"><span class="bar"></span>它接住的三件事</div>
+  <div class="tri">
+    <div class="cell">
+      <div class="big">方向</div>
+      <div class="t">谁决</div>
+      <div class="d">方向终裁权归人，治理层只负责把「谁在决定方向」摆透明。</div>
+    </div>
+    <div class="cell">
+      <div class="big">偏航</div>
+      <div class="t">谁拦</div>
+      <div class="d">偏离自检持续跑，漂移检出即阻断提示，不等事故。</div>
+    </div>
+    <div class="cell">
+      <div class="big">谄媚</div>
+      <div class="t">谁防</div>
+      <div class="d">反谄媚检测（FEE 谗臣效应实证），拦下「一味顺着你说」。</div>
+    </div>
+  </div>
+
+  <!-- 双线验证 -->
+  <div class="sec-title"><span class="bar"></span>双运行时验证（2026-08-15 实测）<span class="note">同一份 agent 定义，两个运行时独立跑，结论一致</span></div>
+  <table>
+    <tr><th>验证维度</th><th>A 线：opencode + DSV4F（外部运行时）</th><th>B 线：WorkBuddy（内部运行时）</th><th>一致</th></tr>
+    <tr><td>死指针集合</td><td>6+1 根目录 + wikilink 链 + 2 绝对/相对死链</td><td>独立 Test-Path 逐项印证</td><td class="ok">✅</td></tr>
+    <tr><td>旧路径残留</td><td>活动导航 0 残留</td><td>全量 grep 仅历史/工具残留</td><td class="ok">✅</td></tr>
+    <tr><td>版本漂移</td><td>未显式检出</td><td>同口径</td><td class="ok">✅</td></tr>
+    <tr><td>阻断判定</td><td>部分阻断（高危死指针）</td><td>同判定</td><td class="ok">✅</td></tr>
+    <tr><td>诚实标注</td><td>5 项不可确认明确标注</td><td>同口径</td><td class="ok">✅</td></tr>
+    <tr><td>第一反应源</td><td>磁盘扫描（Test-Path + Grep）</td><td>磁盘扫描</td><td class="ok">✅</td></tr>
+  </table>
+  <p style="font-size:12px;color:var(--ink-faint);margin-top:8px">→ 两线独立得出一致、可磁盘佐证、诚实标注未知的结论。「磁盘即权威源 / 来源透明 / 不自欺」纪律跨运行时保持一致。</p>
+
+  <!-- 接入 -->
+  <div class="sec-title"><span class="bar"></span>怎么接（drop-in 示意）</div>
+  <div class="stack">
+    <div class="layer">现有 harness（DSH / opencode / WorkBuddy / Claude Code）</div>
+    <div class="arrow">│ 执行层原样保留，壳的事归壳</div>
+    <div class="layer hl">玄览治理层（叠加）<br><span style="font-weight:400;font-size:12px">治理/规划 · 架构合规检测</span></div>
+  </div>
+
+  <div class="foot">
+    <div>蒋平 · 独立构建 · 知乎专栏「共生治理层」系列同步</div>
+    <div class="right">
+      外链：
+      <a href="https://jackyjinggit.github.io/pdss-life-value-system/dsh-for-founders.html" target="_blank" rel="noopener">个人主页</a> ·
+      <a href="https://github.com/jackyjinggit" target="_blank" rel="noopener" style="color:var(--cyan-bright)">GitHub</a> ·
+      <a href="https://www.zhihu.com/people/jiang-ping-8-61" target="_blank" rel="noopener" style="color:var(--cyan-bright)">知乎</a> ·
+      <a href="https://weibo.com/u/3069897487" target="_blank" rel="noopener" style="color:var(--cyan-bright)">微博</a> ·
+      <a href="https://space.bilibili.com/14376381" target="_blank" rel="noopener" style="color:var(--cyan-bright)">B站</a>
+    </div>
+  </div>
+
+  <!-- ===== 材料阵列互链 ===== -->
+  <div class="sec-title"><span class="bar"></span>材料阵列 <span class="note">同目录部署即互链生效</span></div>
+  <div class="grid">
+    <div class="card" data-link="简历蒋平_HTML版_2026-08-29.html" style="padding:12px 14px">
+      <h3 style="margin:0 0 4px">📄 简历（枢纽）</h3>
+      <p style="margin:0">全链条 + 治理对齐 + 可交付贾维斯模块 · <a href="简历蒋平_HTML版_2026-08-29.html" style="color:var(--cyan-bright)">查看</a></p>
+    </div>
+    <div class="card" data-link="看板娘_砚_intro.html" style="padding:12px 14px">
+      <h3 style="margin:0 0 4px">👧 看板娘「砚」</h3>
+      <p style="margin:0">自我介绍看板娘：对话树 + 可验证产出卡 · <a href="看板娘_砚_intro.html" style="color:var(--cyan-bright)">查看</a></p>
+    </div>
+    <div class="card" data-link="窗口对话IAAP直验Protocol_v1_2026-08-29.html" style="padding:12px 14px">
+      <h3 style="margin:0 0 4px">🔍 IAAP 直验 Protocol</h3>
+      <p style="margin:0">窗口对话直验：复制即用，当场自检谄媚 · <a href="窗口对话IAAP直验Protocol_v1_2026-08-29.html" style="color:var(--cyan-bright)">查看</a></p>
+    </div>
+    <div class="card" data-link="完成度实证报告_2026-08-29.html" style="padding:12px 14px">
+      <h3 style="margin:0 0 4px">📊 完成度实证报告</h3>
+      <p style="margin:0">8 项证据锚 + 10 分钟演示脚本 · <a href="完成度实证报告_2026-08-29.html" style="color:var(--cyan-bright)">查看</a></p>
+    </div>
+  </div>
+</div>
+
+<script>
+document.querySelectorAll('.card[data-link]').forEach(function(card){
+  card.addEventListener('click', function(e){
+    if(e.target.closest('a')) return;
+    var url = card.getAttribute('data-link');
+    if(card.getAttribute('data-external')){ window.open(url, '_blank', 'noopener'); }
+    else { window.location.href = url; }
+  });
+});
+</script>
+</body>
+</html>
